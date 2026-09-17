@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ಹಣ ಲೆಕ್ಕ - Login</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans Kannada', 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #0f9b6c, #0c7a54);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 380px;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    padding: 32px 28px;
+  }
+  .logo { text-align: center; margin-bottom: 6px; font-size: 40px; }
+  h1 { text-align: center; color: #0c7a54; font-size: 24px; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 24px; }
+  .field { position: relative; margin-bottom: 16px; }
+  .field span.icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+  input {
+    width: 100%; padding: 13px 14px 13px 42px; border: 1.5px solid #e0e0e0;
+    border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s;
+  }
+  input:focus { border-color: #0f9b6c; }
+  .btn-primary {
+    width: 100%; padding: 13px; background: #0f9b6c; color: #fff; border: none;
+    border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+    margin-top: 4px; transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #0c7a54; }
+  .fingerprint-row { text-align: center; margin: 18px 0; }
+  .fingerprint-btn {
+    width: 56px; height: 56px; border-radius: 50%; border: 2px solid #0f9b6c;
+    background: #eafbf3; font-size: 26px; cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center; transition: transform 0.15s;
+  }
+  .fingerprint-btn:active { transform: scale(0.92); }
+  .fingerprint-label { font-size: 12px; color: #666; margin-top: 6px; }
+  .links { display: flex; justify-content: space-between; font-size: 13px; margin-top: 10px; }
+  .links a { color: #0f9b6c; text-decoration: none; font-weight: 600; cursor: pointer; }
+  .divider { text-align: center; margin: 20px 0 14px; color: #aaa; font-size: 12px; position: relative; }
+  .divider::before, .divider::after {
+    content: ""; position: absolute; top: 50%; width: 40%; height: 1px; background: #eee;
+  }
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+  .create-account {
+    display: block; text-align: center; padding: 12px; border: 1.5px solid #0f9b6c;
+    border-radius: 10px; color: #0f9b6c; font-weight: 600; cursor: pointer;
+    background: #fff; width: 100%; font-size: 15px;
+  }
+  .hidden { display: none; }
+  .back-link { display: inline-block; margin-bottom: 14px; color: #0f9b6c; cursor: pointer; font-size: 14px; font-weight: 600; }
+  .msg { text-align: center; font-size: 13px; margin-top: 12px; min-height: 16px; color: #d9534f; }
+  .msg.success { color: #0f9b6c; }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div id="loginView">
+    <div class="logo">💰</div>
+    <h1>ಹಣ ಲೆಕ್ಕ</h1>
+    <div class="subtitle">Version 6 — ನಿಮ್ಮ ಖಾತೆಗೆ ಲಾಗಿನ್ ಆಗಿ</div>
+
+    <div class="field">
+      <span class="icon">👤</span>
+      <input type="text" id="loginUser" placeholder="Username / Mobile Number">
+    </div>
+    <div class="field">
+      <span class="icon">🔐</span>
+      <input type="password" id="loginPass" placeholder="Password">
+    </div>
+
+    <button class="btn-primary" onclick="handleLogin()">🟢 Login</button>
+
+    <div class="fingerprint-row">
+      <div class="fingerprint-btn" onclick="handleFingerprint()">👆</div>
+      <div class="fingerprint-label">Fingerprint Login</div>
+    </div>
+
+    <div class="links">
+      <a onclick="showForgot()">🔄 Forgot Password</a>
+    </div>
+
+    <div class="divider">ಅಥವಾ</div>
+
+    <button class="create-account" onclick="showRegister()">📝 Create New Account</button>
+
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <div id="registerView" class="hidden">
+    <span class="back-link" onclick="showLogin()">← ಹಿಂದೆ</span>
+    <h1>📱 Registration</h1>
+    <div class="subtitle">ಹೊಸ ಖಾತೆ ರಚಿಸಿ</div>
+
+    <div class="field">
+      <span class="icon">🧑</span>
+      <input type="text" id="regName" placeholder="ಹೆಸರು (Name)">
+    </div>
+    <div class="field">
+      <span class="icon">📱</span>
+      <input type="text" id="regMobile" placeholder="ಮೊಬೈಲ್ ನಂಬರ್ (Mobile)" maxlength="10">
+    </div>
+    <div class="field">
+      <span class="icon">🔐</span>
+      <input type="password" id="regPass" placeholder="Password">
+    </div>
+    <div class="field">
+      <span class="icon">🔐</span>
+      <input type="password" id="regConfirmPass" placeholder="Confirm Password">
+    </div>
+
+    <button class="btn-primary" onclick="handleRegister()">✅ Register</button>
+    <div class="msg" id="registerMsg"></div>
+  </div>
+
+  <div id="forgotView" class="hidden">
+    <span class="back-link" onclick="showLogin()">← ಹಿಂದೆ</span>
+    <h1>🔄 Forgot Password</h1>
+    <div class="subtitle">ನಿಮ್ಮ ಮೊಬೈಲ್ ನಂಬರ್ ನಮೂದಿಸಿ</div>
+
+    <div class="field">
+      <span class="icon">📱</span>
+      <input type="text" id="forgotMobile" placeholder="Mobile Number" maxlength="10">
+    </div>
+
+    <button class="btn-primary" onclick="handleForgot()">📩 OTP ಕಳುಹಿಸಿ</button>
+    <div class="msg" id="forgotMsg"></div>
+  </div>
+
+  <div id="resetView" class="hidden">
+    <span class="back-link" onclick="showForgot()">← ಹಿಂದೆ</span>
+    <h1>🔑 OTP ಪರಿಶೀಲಿಸಿ</h1>
+    <div class="subtitle">ಮೊಬೈಲ್‌ಗೆ ಬಂದ OTP ಮತ್ತು ಹೊಸ Password ನಮೂದಿಸಿ</div>
+
+    <div class="field">
+      <span class="icon">🔢</span>
+      <input type="text" id="resetOtp" placeholder="OTP" maxlength="6">
+    </div>
+    <div class="field">
+      <span class="icon">🔐</span>
+      <input type="password" id="resetNewPass" placeholder="ಹೊಸ Password">
+    </div>
+
+    <button class="btn-primary" onclick="handleResetPassword()">✅ Password ಬದಲಾಯಿಸಿ</button>
+    <div class="msg" id="resetMsg"></div>
+  </div>
+
+</div>
+
+<script>
+  const BASE_URL = "";
+
+  let resetMobile = "";
+
+  function showLogin() {
+    document.getElementById('loginView').classList.remove('hidden');
+    document.getElementById('registerView').classList.add('hidden');
+    document.getElementById('forgotView').classList.add('hidden');
+    document.getElementById('resetView').classList.add('hidden');
+  }
+  function showRegister() {
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('registerView').classList.remove('hidden');
+    document.getElementById('forgotView').classList.add('hidden');
+    document.getElementById('resetView').classList.add('hidden');
+  }
+  function showForgot() {
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('registerView').classList.add('hidden');
+    document.getElementById('forgotView').classList.remove('hidden');
+    document.getElementById('resetView').classList.add('hidden');
+  }
+  function showReset() {
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('registerView').classList.add('hidden');
+    document.getElementById('forgotView').classList.add('hidden');
+    document.getElementById('resetView').classList.remove('hidden');
+  }
+
+  async function callApi(path, body) {
+    const response = await fetch(BASE_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    return { ok: response.ok, data };
+  }
+
+  async function handleLogin() {
+    const mobile = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const msg = document.getElementById('loginMsg');
+
+    if (!mobile || !pass) {
+      msg.className = "msg";
+      msg.textContent = "⚠️ ದಯವಿಟ್ಟು ಎಲ್ಲಾ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ";
+      return;
+    }
+
+    msg.className = "msg";
+    msg.textContent = "⏳ ಲಾಗಿನ್ ಆಗುತ್ತಿದೆ...";
+
+    try {
+      const { ok, data } = await callApi('/api/login', { mobile, password: pass });
+      if (ok && data.success) {
+        localStorage.setItem('hanaLekkaToken', data.token);
+        localStorage.setItem('hanaLekkaUser', JSON.stringify(data.user));
+        msg.className = "msg success";
+        msg.textContent = "✅ ಲಾಗಿನ್ ಯಶಸ್ವಿ! ಸ್ವಾಗತ, " + data.user.name;
+      } else {
+        msg.className = "msg";
+        msg.textContent = "❌ " + (data.message || "ಲಾಗಿನ್ ವಿಫಲ");
+      }
+    } catch (err) {
+      msg.className = "msg";
+      msg.textContent = "❌ Server ಗೆ ಸಂಪರ್ಕ ಆಗಲಿಲ್ಲ.";
+    }
+  }
+
+  function handleFingerprint() {
+    const msg = document.getElementById('loginMsg');
+    msg.className = "msg success";
+    msg.textContent = "👆 ಫಿಂಗರ್‌ಪ್ರಿಂಟ್ ಲಾಗಿನ್ ಶೀಘ್ರದಲ್ಲೇ ಲಭ್ಯ";
+  }
+
+  async function handleRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const mobile = document.getElementById('regMobile').value.trim();
+    const pass = document.getElementById('regPass').value.trim();
+    const confirmPass = document.getElementById('regConfirmPass').value.trim();
+    const msg = document.getElementById('registerMsg');
+
+    if (!name || !mobile || !pass || !confirmPass) {
+      msg.className = "msg";
+      msg.textContent = "⚠️ ಎಲ್ಲಾ ಫೀಲ್ಡ್‌ಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ";
+      return;
+    }
+
+    msg.className = "msg";
+    msg.textContent = "⏳ ನೋಂದಣಿ ಆಗುತ್ತಿದೆ...";
+
+    try {
+      const { ok, data } = await callApi('/api/register', {
+        name, mobile, password: pass, confirmPassword: confirmPass
+      });
+      if (ok && data.success) {
+        msg.className = "msg success";
+        msg.textContent = "✅ ನೋಂದಣಿ ಯಶಸ್ವಿ! ಈಗ ಲಾಗಿನ್ ಮಾಡಿ";
+        setTimeout(showLogin, 1200);
+      } else {
+        msg.className = "msg";
+        msg.textContent = "❌ " + (data.message || "ನೋಂದಣಿ ವಿಫಲ");
+      }
+    } catch (err) {
+      msg.className = "msg";
+      msg.textContent = "❌ Server ಗೆ ಸಂಪರ್ಕ ಆಗಲಿಲ್ಲ.";
+    }
+  }
+
+  async function handleForgot() {
+    const mobile = document.getElementById('forgotMobile').value.trim();
+    const msg = document.getElementById('forgotMsg');
+
+    if (mobile.length !== 10 || isNaN(mobile)) {
+      msg.className = "msg";
+      msg.textContent = "⚠️ ಸರಿಯಾದ ಮೊಬೈಲ್ ನಂಬರ್ ನಮೂದಿಸಿ";
+      return;
+    }
+
+    msg.className = "msg";
+    msg.textContent = "⏳ OTP ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...";
+
+    try {
+      const { ok, data } = await callApi('/api/forgot-password', { mobile });
+      if (ok && data.success) {
+        resetMobile = mobile;
+        msg.className = "msg success";
+        msg.textContent = "✅ " + data.message + (data.otp_for_testing ? " (ಟೆಸ್ಟ್ OTP: " + data.otp_for_testing + ")" : "");
+        setTimeout(showReset, 1000);
+      } else {
+        msg.className = "msg";
+        msg.textContent = "❌ " + (data.message || "OTP ಕಳುಹಿಸಲು ಆಗಲಿಲ್ಲ");
+      }
+    } catch (err) {
+      msg.className = "msg";
+      msg.textContent = "❌ Server ಗೆ ಸಂಪರ್ಕ ಆಗಲಿಲ್ಲ.";
+    }
+  }
+
+  async function handleResetPassword() {
+    const otp = document.getElementById('resetOtp').value.trim();
+    const newPassword = document.getElementById('resetNewPass').value.trim();
+    const msg = document.getElementById('resetMsg');
+
+    if (!otp || !newPassword) {
+      msg.className = "msg";
+      msg.textContent = "⚠️ OTP ಮತ್ತು ಹೊಸ Password ನಮೂದಿಸಿ";
+      return;
+    }
+
+    msg.className = "msg";
+    msg.textContent = "⏳ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...";
+
+    try {
+      const { ok, data } = await callApi('/api/verify-otp', {
+        mobile: resetMobile, otp, newPassword
+      });
+      if (ok && data.success) {
+        msg.className = "msg success";
+        msg.textContent = "✅ Password ಬದಲಾಯಿಸಲಾಗಿದೆ! ಈಗ ಲಾಗಿನ್ ಮಾಡಿ";
+        setTimeout(showLogin, 1200);
+      } else {
+        msg.className = "msg";
+        msg.textContent = "❌ " + (data.message || "OTP ತಪ್ಪಾಗಿದೆ");
+      }
+    } catch (err) {
+      msg.className = "msg";
+      msg.textContent = "❌ Server ಗೆ ಸಂಪರ್ಕ ಆಗಲಿಲ್ಲ.";
+    }
+  }
+</script>
+
+</body>
+</html>
