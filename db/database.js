@@ -36,4 +36,13 @@ async function initDb() {
       type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
       amount NUMERIC(12, 2) NOT NULL,
       category TEXT,
-      note T
+      note TEXT,
+      txn_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  console.log('Database tables ready (PostgreSQL)');
+}
+
+module.exports = { pool, initDb };
