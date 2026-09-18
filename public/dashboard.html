@@ -26,14 +26,25 @@
     padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer;
   }
   .welcome { margin-top: 4px; font-size: 13px; opacity: 0.9; }
-  .summary-row { display: flex; gap: 10px; padding: 16px; margin-top: -30px; }
+
+  .month-nav {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    padding: 14px 16px 0;
+  }
+  .month-nav button {
+    background: #fff; border: none; width: 34px; height: 34px; border-radius: 50%;
+    font-size: 16px; color: #0c7a54; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .month-label { font-size: 15px; font-weight: 700; color: #333; min-width: 150px; text-align: center; }
+
+  .summary-row { display: flex; gap: 10px; padding: 16px; }
   .summary-card { flex: 1; background: #fff; border-radius: 14px; padding: 14px 10px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
   .summary-card .label { font-size: 12px; color: #888; margin-bottom: 4px; }
   .summary-card .amount { font-size: 17px; font-weight: 700; }
   .income .amount { color: #0f9b6c; }
   .expense .amount { color: #d9534f; }
   .balance .amount { color: #2b5daa; }
-  .section { padding: 0 16px; margin-top: 18px; }
+  .section { padding: 0 16px; margin-top: 8px; }
   .section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 10px; }
   .txn-list { display: flex; flex-direction: column; gap: 8px; }
   .txn-item {
@@ -69,6 +80,7 @@
   }
   .type-btn.active-income { background: #eafbf3; border-color: #0f9b6c; color: #0f9b6c; }
   .type-btn.active-expense { background: #fdeceb; border-color: #d9534f; color: #d9534f; }
+  .field-label { font-size: 12px; color: #888; margin-bottom: 4px; display: block; }
   .sheet input {
     width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px;
     font-size: 15px; margin-bottom: 12px; outline: none;
@@ -92,6 +104,12 @@
   <div class="welcome" id="welcomeText">ಸ್ವಾಗತ...</div>
 </header>
 
+<div class="month-nav">
+  <button onclick="changeMonth(-1)">‹</button>
+  <div class="month-label" id="monthLabel">...</div>
+  <button onclick="changeMonth(1)">›</button>
+</div>
+
 <div class="summary-row">
   <div class="summary-card income">
     <div class="label">Income</div>
@@ -108,7 +126,7 @@
 </div>
 
 <div class="section">
-  <div class="section-title">ಇತ್ತೀಚಿನ Transactions</div>
+  <div class="section-title">Transactions</div>
   <div class="txn-list" id="txnList">
     <div class="empty-msg">ಲೋಡ್ ಆಗುತ್ತಿದೆ...</div>
   </div>
@@ -123,9 +141,14 @@
       <button type="button" class="type-btn" id="incomeBtn" onclick="setType('income')">💰 Income</button>
       <button type="button" class="type-btn" id="expenseBtn" onclick="setType('expense')">💸 Expense</button>
     </div>
-    <input type="number" id="amountInput" placeholder="ಮೊತ್ತ (₹)">
-    <input type="text" id="categoryInput" placeholder="Category (ಉದಾ: ಕಿರಾಣಿ, ಸಂಬಳ)">
-    <input type="text" id="noteInput" placeholder="Note (ಐಚ್ಛಿಕ)">
+    <span class="field-label">ಮೊತ್ತ</span>
+    <input type="number" id="amountInput" placeholder="₹">
+    <span class="field-label">Category</span>
+    <input type="text" id="categoryInput" placeholder="ಉದಾ: ಕಿರಾಣಿ, ಸಂಬಳ">
+    <span class="field-label">ದಿನಾಂಕ</span>
+    <input type="date" id="dateInput">
+    <span class="field-label">Note (ಐಚ್ಛಿಕ)</span>
+    <input type="text" id="noteInput" placeholder="Note">
     <div class="sheet-actions">
       <button class="cancel-btn" onclick="closeSheet()">ರದ್ದು</button>
       <button class="save-btn" onclick="saveTransaction()">ಸೇವ್ ಮಾಡಿ</button>
@@ -137,19 +160,19 @@
 <script>
   const BASE_URL = "";
   let selectedType = "expense";
+  let currentMonth = new Date();
+
+  const monthNames = ['ಜನವರಿ','ಫೆಬ್ರವರಿ','ಮಾರ್ಚ್','ಏಪ್ರಿಲ್','ಮೇ','ಜೂನ್','ಜುಲೈ','ಆಗಸ್ಟ್','ಸೆಪ್ಟೆಂಬರ್','ಅಕ್ಟೋಬರ್','ನವೆಂಬರ್','ಡಿಸೆಂಬರ್'];
 
   function getToken() { return localStorage.getItem('hanaLekkaToken'); }
-
   function authHeaders() {
     return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() };
   }
-
   function handleLogout() {
     localStorage.removeItem('hanaLekkaToken');
     localStorage.removeItem('hanaLekkaUser');
     window.location.href = 'index.html';
   }
-
   function checkAuth() {
     const token = getToken();
     if (!token) { window.location.href = 'index.html'; return; }
@@ -159,14 +182,38 @@
       document.getElementById('welcomeText').textContent = 'ಸ್ವಾಗತ, ' + user.name;
     }
   }
-
   function formatMoney(n) {
     return '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function toDateStr(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+  function getMonthRange() {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const from = toDateStr(new Date(y, m, 1));
+    const to = toDateStr(new Date(y, m + 1, 0));
+    return { from, to };
+  }
+
+  function updateMonthLabel() {
+    document.getElementById('monthLabel').textContent =
+      monthNames[currentMonth.getMonth()] + ' ' + currentMonth.getFullYear();
+  }
+
+  function changeMonth(delta) {
+    currentMonth.setMonth(currentMonth.getMonth() + delta);
+    updateMonthLabel();
+    loadSummary();
+    loadTransactions();
   }
 
   async function loadSummary() {
     try {
-      const res = await fetch(BASE_URL + '/api/transactions/summary', { headers: authHeaders() });
+      const { from, to } = getMonthRange();
+      const res = await fetch(BASE_URL + '/api/transactions/summary?from=' + from + '&to=' + to, {
+        headers: authHeaders()
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         document.getElementById('totalIncome').textContent = formatMoney(data.summary.income);
@@ -181,11 +228,14 @@
   async function loadTransactions() {
     const list = document.getElementById('txnList');
     try {
-      const res = await fetch(BASE_URL + '/api/transactions', { headers: authHeaders() });
+      const { from, to } = getMonthRange();
+      const res = await fetch(BASE_URL + '/api/transactions?from=' + from + '&to=' + to, {
+        headers: authHeaders()
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         if (data.transactions.length === 0) {
-          list.innerHTML = '<div class="empty-msg">ಇನ್ನೂ ಯಾವುದೇ Transaction ಇಲ್ಲ. ➕ ಒತ್ತಿ ಸೇರಿಸಿ.</div>';
+          list.innerHTML = '<div class="empty-msg">ಈ ತಿಂಗಳು ಯಾವುದೇ Transaction ಇಲ್ಲ. ➕ ಒತ್ತಿ ಸೇರಿಸಿ.</div>';
           return;
         }
         list.innerHTML = data.transactions.map(txn => `
@@ -219,6 +269,7 @@
 
   function openSheet() {
     document.getElementById('overlay').classList.add('show');
+    document.getElementById('dateInput').value = toDateStr(new Date());
     setType('expense');
   }
   function closeSheet() {
@@ -238,6 +289,7 @@
     const amount = document.getElementById('amountInput').value.trim();
     const category = document.getElementById('categoryInput').value.trim();
     const note = document.getElementById('noteInput').value.trim();
+    const date = document.getElementById('dateInput').value;
     const msg = document.getElementById('formMsg');
 
     if (!amount || Number(amount) <= 0) {
@@ -252,7 +304,7 @@
     try {
       const res = await fetch(BASE_URL + '/api/transactions', {
         method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ type: selectedType, amount, category, note })
+        body: JSON.stringify({ type: selectedType, amount, category, note, date })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -272,6 +324,7 @@
   }
 
   checkAuth();
+  updateMonthLabel();
   loadSummary();
   loadTransactions();
 </script>
