@@ -223,6 +223,7 @@
         localStorage.setItem('hanaLekkaUser', JSON.stringify(data.user));
         msg.className = "msg success";
         msg.textContent = "✅ ಲಾಗಿನ್ ಯಶಸ್ವಿ! ಸ್ವಾಗತ, " + data.user.name;
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
       } else {
         msg.className = "msg";
         msg.textContent = "❌ " + (data.message || "ಲಾಗಿನ್ ವಿಫಲ");
