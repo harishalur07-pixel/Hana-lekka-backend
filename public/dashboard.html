@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ಹಣ ಲೆಕ್ಕ - Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans Kannada', 'Segoe UI', Arial, sans-serif;
+    background: #f2f5f3;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+  header {
+    background: linear-gradient(135deg, #0f9b6c, #0c7a54);
+    color: #fff;
+    padding: 20px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .app-title { font-size: 20px; font-weight: 700; }
+  .logout-btn {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer;
+  }
+  .welcome { margin-top: 4px; font-size: 13px; opacity: 0.9; }
+  .summary-row { display: flex; gap: 10px; padding: 16px; margin-top: -30px; }
+  .summary-card { flex: 1; background: #fff; border-radius: 14px; padding: 14px 10px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+  .summary-card .label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .summary-card .amount { font-size: 17px; font-weight: 700; }
+  .income .amount { color: #0f9b6c; }
+  .expense .amount { color: #d9534f; }
+  .balance .amount { color: #2b5daa; }
+  .section { padding: 0 16px; margin-top: 18px; }
+  .section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 10px; }
+  .txn-list { display: flex; flex-direction: column; gap: 8px; }
+  .txn-item {
+    background: #fff; border-radius: 12px; padding: 12px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .txn-left { display: flex; flex-direction: column; }
+  .txn-category { font-size: 14px; font-weight: 600; color: #333; }
+  .txn-date { font-size: 11px; color: #999; margin-top: 2px; }
+  .txn-right { display: flex; align-items: center; gap: 10px; }
+  .txn-amount { font-size: 15px; font-weight: 700; }
+  .txn-amount.income { color: #0f9b6c; }
+  .txn-amount.expense { color: #d9534f; }
+  .del-btn { background: none; border: none; font-size: 16px; cursor: pointer; opacity: 0.6; }
+  .empty-msg { text-align: center; color: #999; font-size: 13px; padding: 30px 0; }
+  .fab {
+    position: fixed; bottom: 24px; right: 24px; width: 58px; height: 58px;
+    border-radius: 50%; background: #0f9b6c; color: #fff; font-size: 28px;
+    border: none; box-shadow: 0 6px 16px rgba(0,0,0,0.25); cursor: pointer;
+  }
+  .overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    align-items: flex-end; justify-content: center; z-index: 10;
+  }
+  .overlay.show { display: flex; }
+  .sheet { background: #fff; width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 22px 20px 28px; }
+  .sheet h2 { font-size: 17px; margin-bottom: 14px; color: #0c7a54; }
+  .type-toggle { display: flex; gap: 10px; margin-bottom: 14px; }
+  .type-btn {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
+    background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; color: #666;
+  }
+  .type-btn.active-income { background: #eafbf3; border-color: #0f9b6c; color: #0f9b6c; }
+  .type-btn.active-expense { background: #fdeceb; border-color: #d9534f; color: #d9534f; }
+  .sheet input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px;
+    font-size: 15px; margin-bottom: 12px; outline: none;
+  }
+  .sheet input:focus { border-color: #0f9b6c; }
+  .sheet-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .sheet-actions button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .save-btn { background: #0f9b6c; color: #fff; }
+  .cancel-btn { background: #f0f0f0; color: #555; }
+  .msg { text-align: center; font-size: 13px; margin-top: 10px; min-height: 16px; color: #d9534f; }
+  .msg.success { color: #0f9b6c; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="app-title">💰 ಹಣ ಲೆಕ್ಕ</div>
+    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+  </div>
+  <div class="welcome" id="welcomeText">ಸ್ವಾಗತ...</div>
+</header>
+
+<div class="summary-row">
+  <div class="summary-card income">
+    <div class="label">Income</div>
+    <div class="amount" id="totalIncome">₹0</div>
+  </div>
+  <div class="summary-card expense">
+    <div class="label">Expense</div>
+    <div class="amount" id="totalExpense">₹0</div>
+  </div>
+  <div class="summary-card balance">
+    <div class="label">Balance</div>
+    <div class="amount" id="totalBalance">₹0</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">ಇತ್ತೀಚಿನ Transactions</div>
+  <div class="txn-list" id="txnList">
+    <div class="empty-msg">ಲೋಡ್ ಆಗುತ್ತಿದೆ...</div>
+  </div>
+</div>
+
+<button class="fab" onclick="openSheet()">+</button>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2>ಹೊಸ ಎಂಟ್ರಿ ಸೇರಿಸಿ</h2>
+    <div class="type-toggle">
+      <button type="button" class="type-btn" id="incomeBtn" onclick="setType('income')">💰 Income</button>
+      <button type="button" class="type-btn" id="expenseBtn" onclick="setType('expense')">💸 Expense</button>
+    </div>
+    <input type="number" id="amountInput" placeholder="ಮೊತ್ತ (₹)">
+    <input type="text" id="categoryInput" placeholder="Category (ಉದಾ: ಕಿರಾಣಿ, ಸಂಬಳ)">
+    <input type="text" id="noteInput" placeholder="Note (ಐಚ್ಛಿಕ)">
+    <div class="sheet-actions">
+      <button class="cancel-btn" onclick="closeSheet()">ರದ್ದು</button>
+      <button class="save-btn" onclick="saveTransaction()">ಸೇವ್ ಮಾಡಿ</button>
+    </div>
+    <div class="msg" id="formMsg"></div>
+  </div>
+</div>
+
+<script>
+  const BASE_URL = "";
+  let selectedType = "expense";
+
+  function getToken() { return localStorage.getItem('hanaLekkaToken'); }
+
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() };
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('hanaLekkaToken');
+    localStorage.removeItem('hanaLekkaUser');
+    window.location.href = 'index.html';
+  }
+
+  function checkAuth() {
+    const token = getToken();
+    if (!token) { window.location.href = 'index.html'; return; }
+    const userStr = localStorage.getItem('hanaLekkaUser');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      document.getElementById('welcomeText').textContent = 'ಸ್ವಾಗತ, ' + user.name;
+    }
+  }
+
+  function formatMoney(n) {
+    return '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+
+  async function loadSummary() {
+    try {
+      const res = await fetch(BASE_URL + '/api/transactions/summary', { headers: authHeaders() });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        document.getElementById('totalIncome').textContent = formatMoney(data.summary.income);
+        document.getElementById('totalExpense').textContent = formatMoney(data.summary.expense);
+        document.getElementById('totalBalance').textContent = formatMoney(data.summary.balance);
+      } else if (res.status === 401 || res.status === 403) {
+        handleLogout();
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  async function loadTransactions() {
+    const list = document.getElementById('txnList');
+    try {
+      const res = await fetch(BASE_URL + '/api/transactions', { headers: authHeaders() });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.transactions.length === 0) {
+          list.innerHTML = '<div class="empty-msg">ಇನ್ನೂ ಯಾವುದೇ Transaction ಇಲ್ಲ. ➕ ಒತ್ತಿ ಸೇರಿಸಿ.</div>';
+          return;
+        }
+        list.innerHTML = data.transactions.map(txn => `
+          <div class="txn-item">
+            <div class="txn-left">
+              <div class="txn-category">${txn.category || (txn.type === 'income' ? 'Income' : 'Expense')}</div>
+              <div class="txn-date">${txn.txn_date}${txn.note ? ' • ' + txn.note : ''}</div>
+            </div>
+            <div class="txn-right">
+              <div class="txn-amount ${txn.type}">${txn.type === 'income' ? '+' : '-'}${formatMoney(txn.amount)}</div>
+              <button class="del-btn" onclick="deleteTransaction(${txn.id})">🗑️</button>
+            </div>
+          </div>
+        `).join('');
+      } else if (res.status === 401 || res.status === 403) {
+        handleLogout();
+      }
+    } catch (err) {
+      list.innerHTML = '<div class="empty-msg">Server ಗೆ ಸಂಪರ್ಕ ಆಗಲಿಲ್ಲ</div>';
+    }
+  }
+
+  async function deleteTransaction(id) {
+    if (!confirm('ಈ Transaction ಡಿಲೀಟ್ ಮಾಡಬೇಕೇ?')) return;
+    try {
+      await fetch(BASE_URL + '/api/transactions/' + id, { method: 'DELETE', headers: authHeaders() });
+      loadSummary();
+      loadTransactions();
+    } catch (err) { alert('ಡಿಲೀಟ್ ಆಗಲಿಲ್ಲ'); }
+  }
+
+  function openSheet() {
+    document.getElementById('overlay').classList.add('show');
+    setType('expense');
+  }
+  function closeSheet() {
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('amountInput').value = '';
+    document.getElementById('categoryInput').value = '';
+    document.getElementById('noteInput').value = '';
+    document.getElementById('formMsg').textContent = '';
+  }
+  function setType(type) {
+    selectedType = type;
+    document.getElementById('incomeBtn').className = 'type-btn' + (type === 'income' ? ' active-income' : '');
+    document.getElementById('expenseBtn').className = 'type-btn' + (type === 'expense' ? ' active-expense' : '');
+  }
+
+  async function saveTransaction() {
+    const amount = document.getElementById('amountInput').value.trim();
+    const category = document.getElementById('categoryInput').value.trim();
+    const note = document.getElementById('noteInput').value.trim();
+    const msg = document.getElementById('formMsg');
+
+    if (!amount || Number(amount) <= 0) {
+      msg.className = 'msg';
+      msg.textContent = '⚠️ ಸರಿಯಾದ ಮೊತ್ತ ನಮೂದಿಸಿ';
+      return;
+    }
+
+    msg.className = 'msg';
+    msg.textContent = '⏳ ಸೇವ್ ಆಗುತ್ತಿದೆ...';
+
+    try {
+      const res = await fetch(BASE_URL + '/api/transactions', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ type: selectedType, amount, category, note })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        msg.className = 'msg success';
+        msg.textContent = '✅ ಸೇರಿಸಲಾಗಿದೆ';
+        loadSummary();
+        loadTransactions();
+        setTimeout(closeSheet, 600);
+      } else {
+        msg.className = 'msg';
+        msg.textContent = '❌ ' + (data.message || 'ಸೇವ್ ಆಗಲಿಲ್ಲ');
+      }
+    } catch (err) {
+      msg.className = 'msg';
+      msg.textContent = '❌ Server ಗೆ ಸಂಪರ್ಕ ಆಗಲಿಲ್ಲ';
+    }
+  }
+
+  checkAuth();
+  loadSummary();
+  loadTransactions();
+</script>
+
+</body>
+</html>
